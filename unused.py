@@ -7,8 +7,11 @@ from main import images, test
 def hvs_tresholding_error(bl, gl, rl, bu, gu, ru):
     err = 0
     for filename, image in images.items():
-        thresholded = cv2.inRange(cv2.cvtColor(image, cv2.COLOR_BGR2HSV), np.array([bl, gl, rl]),
-                                  np.array([bu, gu, ru]))
+        thresholded = cv2.inRange(
+            cv2.cvtColor(image, cv2.COLOR_BGR2HSV),
+            np.array([bl, gl, rl]),
+            np.array([bu, gu, ru]),
+        )
         ground_truth, b, c = cv2.split(test[filename])
         err += np.sum((thresholded - ground_truth) ** 2)
 
