@@ -1,7 +1,30 @@
 import cv2
 import numpy as np
 
-from src.main import hsv_mask
+
+def hsv_mask(
+    image,
+    lower1=None,
+    upper1=None,
+    lower2=None,
+    upper2=None,
+    median_blur=5,
+    closing_factor=0.1,
+):
+    if upper2 is None:
+        upper2 = [180, 50, 255]
+    if lower2 is None:
+        lower2 = [115, 14, 120]
+    if upper1 is None:
+        upper1 = [20, 180, 255]
+    if lower1 is None:
+        lower1 = [0, 30, 80]
+    mask_hsv1 = hsv_tresholding(image, lower1, upper1)
+    mask_hsv2 = hsv_tresholding(image, lower2, upper2)
+    mask_hsv = cv2.bitwise_or(mask_hsv1, mask_hsv2)
+    blurred = cv2.medianBlur(mask_hsv, median_blur)
+
+    return mask_hsv
 
 
 def hvs_tresholding_error(bl, gl, rl, bu, gu, ru):
@@ -34,14 +57,6 @@ def channel(image, channel=0):
         return r
 
 
-def equalization(image):
-    b, g, r = cv2.split(image)
-    eb = cv2.equalizeHist(b)
-    eg = cv2.equalizeHist(g)
-    er = cv2.equalizeHist(r)
-    return cv2.merge((eb, eg, er))
-
-
 def find_hand_old(frame):
 
     YCrCb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
@@ -58,12 +73,6 @@ def find_hand_old(frame):
     cv2.imshow("res_old", res)
 
     return res
-
-
-def canny_hsv(carved):
-    hsv = cv2.cvtColor(carved, cv2.COLOR_BGR2HSV)
-    cnn = cv2.Canny(hsv, 0, 255)
-    return cnn
 
 
 def hsv_carving(
