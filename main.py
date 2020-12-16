@@ -89,7 +89,6 @@ def clahe(image, mask=None, hsv=False):
     for i, plane in enumerate(channels):
         channels[i] = clahe.apply(plane)
     image = cv2.merge(channels)
-    # image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
     if mask is not None:
         image = cv2.bitwise_and(image, image, mask=mask)
     if hsv == True:
@@ -117,7 +116,7 @@ def largest_component_mask(bin_img):
 
 def canny_hsv(carved):
     hsv = cv2.cvtColor(carved, cv2.COLOR_BGR2HSV)
-    cnn = cv2.Canny(hsv, 0, 255)
+    cnn = cv2.Canny(hsv, 20, 255)
     return cnn
 
 
@@ -146,7 +145,7 @@ def circles(image):
     if circles is not None:
         circles = np.round(circles[0, :]).astype("int")
         for (x, y, r) in circles:
-            cv2.circle(output, (x, y), r, (0, 150, 0), 4)
+            cv2.circle(output, (x, y), r, 40, 4)
             cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
     return output
 
@@ -168,87 +167,61 @@ def Sobel(gray, k=3):
     )
 
 
+def six_channels_operation(image, f):
+    convert(
+        np.array(
+            [
+                np.array(
+                    [
+                        np.array(Sobel(split))
+                        for split in cv2.split(cv2.pyrMeanShiftFiltering(img, 11, 31))
+                    ]
+                )
+                for img in [
+                    equalization(component),
+                    equalization(component, hsv=True),
+                    equalization(
+                        component,
+                        mask=final_mask,
+                    ),
+                    equalization(component, mask=final_mask, hsv=True),
+                ]
+            ]
+        )
+        .sum(axis=0)
+        .sum(axis=0)
+        .sum(axis=0)
+    )
+
+
+def gray(image):
+    return equalization(cv2.split(cv2.cvtColor(image, cv2.COLOR_BGR2HSV))[1])
+
+
 def main():
-    for filename, image in images.items():
+    keys = list(images.keys())
+    for filename in np.random.choice(keys, len(keys)):
+        image = cv2.GaussianBlur(images[filename], (5, 5), 5)
+        rad = min(image.shape[:2]) // 20
+        rad = rad if rad % 2 else rad + 1
         cv2.namedWindow(filename, cv2.WINDOW_NORMAL)
         final_mask = largest_component_mask(hsv_mask(image))
         component = cv2.bitwise_and(image, image, mask=final_mask)
-        clahed_component = equalization(component, mask=final_mask, hsv=True)
-        r = min(image.shape[:2]) // 50
-        r = r if r % 2 else r + 1
+        clahed_component = cv2.medianBlur(clahe(component, hsv=True), rad)
+        b, g, r = cv2.split(clahed_component)
+        h, s, v = cv2.split(cv2.cvtColor(clahed_component, cv2.COLOR_BGR2HSV))
         cv2.resizeWindow(filename, 1000, 600)
         cv2.imshow(
             filename,
             side_by_side(
-                convert(
-                    np.array(
-                        [
-                            np.array(
-                                [np.array(Sobel(split)) for split in cv2.split((img))]
-                            )
-                            for img in [
-                                equalization(component),
-                                equalization(component, hsv=True),
-                                equalization(
-                                    component,
-                                    mask=final_mask,
-                                ),
-                                equalization(component, mask=final_mask, hsv=True),
-                            ]
+                cv2.bitwise_and(
+                    circles(
+                        cv2.threshold(gray(component), 30, 250, cv2.THRESH_BINARY_INV)[
+                            1
                         ]
-                    )
-                    .sum(axis=0)
-                    .sum(axis=0)
-                    .sum(axis=0)
-                ),
-                convert(
-                    np.array(
-                        [
-                            np.array(
-                                [
-                                    np.array(Sobel(split))
-                                    for split in cv2.split(cv2.medianBlur(img, 5))
-                                ]
-                            )
-                            for img in [
-                                equalization(component),
-                                equalization(component, hsv=True),
-                                equalization(
-                                    component,
-                                    mask=final_mask,
-                                ),
-                                equalization(component, mask=final_mask, hsv=True),
-                            ]
-                        ]
-                    )
-                    .sum(axis=0)
-                    .sum(axis=0)
-                    .sum(axis=0)
-                ),
-                convert(
-                    np.array(
-                        [
-                            np.array(
-                                [
-                                    np.array(Sobel(split))
-                                    for split in cv2.split(cv2.medianBlur(img, 11))
-                                ]
-                            )
-                            for img in [
-                                equalization(component),
-                                equalization(component, hsv=True),
-                                equalization(
-                                    component,
-                                    mask=final_mask,
-                                ),
-                                equalization(component, mask=final_mask, hsv=True),
-                            ]
-                        ]
-                    )
-                    .sum(axis=0)
-                    .sum(axis=0)
-                    .sum(axis=0)
-                ),
+                    ),
+                    final_mask,
+                )
             ),
         ),
 
@@ -267,8 +240,9 @@ def equalization(image, mask=None, hsv=False):
     # image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
     if mask is not None:
         image = cv2.bitwise_and(image, image, mask=mask)
-    # if hsv == True:
-    #    image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
+    if hsv == True:
+        image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
+
     return image
 
 
