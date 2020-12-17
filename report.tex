@@ -1,0 +1,618 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%     _______ _    _  _____
+%    |__   __| |  | |/ ____|
+%       | |  | |__| | (___
+%       | |  |  __  |\___ \
+%       | |  | |  | |____) |
+%       |_|  |_|  |_|_____/
+%
+%     _               ____
+%    | |        /\   |  _ \
+%    | |       /  \  | |_) |
+%    | |      / /\ \ |  _ <
+%    | |____ / ____ \| |_) |
+%    |______/_/    \_\____/
+%
+% _______ ______ __  __ _____  _            _______ ______
+%|__   __|  ____|  \/  |  __ \| |        /\|__   __|  ____|
+%   | |  | |__  | \  / | |__) | |       /  \  | |  | |__
+%   | |  |  __| | |\/| |  ___/| |      / /\ \ | |  |  __|
+%   | |  | |____| |  | | |    | |____ / ____ \| |  | |____
+%   |_|  |______|_|  |_|_|    |______/_/    \_\_|  |______|
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% DONT CHANGE ANYTHING BEFORE THE "TITLE" SECTION.%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass{article} % Especially this!
+% _____        _____ _  __          _____ ______  _____
+%|  __ \ /\   / ____| |/ /    /\   / ____|  ____|/ ____|
+%| |__) /  \ | |    | ' /    /  \ | |  __| |__  | (___
+%|  ___/ /\ \| |    |  <    / /\ \| | |_ |  __|  \___ \
+%| |  / ____ \ |____| . \  / ____ \ |__| | |____ ____) |
+%|_| /_/    \_\_____|_|\_\/_/    \_\_____|______|_____/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1.5in]{geometry}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{graphicx}
+\usepackage[siunitx]{circuitikz}
+\usepackage{tikz}
+\usepackage[colorinlistoftodos, color=orange!50]{todonotes}
+\usepackage{hyperref}
+\usepackage[numbers, square]{natbib}
+\usepackage{fancybox}
+\usepackage{epsfig}
+\usepackage{soul}
+\usepackage[framemethod=tikz]{mdframed}
+\usepackage[shortlabels]{enumitem}
+\usepackage[version=4]{mhchem}
+\usepackage{multicol}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%   _____ _    _  _____ _______ ____  __  __
+%  / ____| |  | |/ ____|__   __/ __ \|  \/  |
+% | |    | |  | | (___    | | | |  | | \  / |
+% | |    | |  | |\___ \   | | | |  | | |\/| |
+% | |____| |__| |____) |  | | | |__| | |  | |
+%  \_____|\____/|_____/   |_|  \____/|_|  |_|
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{listings}
+
+
+%New colors defined below
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+  backgroundcolor=\color{backcolour},
+  commentstyle=\color{codegreen},
+  keywordstyle=\color{magenta},
+  numberstyle=\tiny\color{codegray},
+  stringstyle=\color{codepurple},
+  basicstyle=\ttfamily\footnotesize,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  keepspaces=true,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=2,
+  language=Python
+}
+
+%"mystyle" code listing set
+\lstset{style=mystyle}
+
+
+%  _____ ____  __  __ __  __          _   _ _____   _____
+% / ____/ __ \|  \/  |  \/  |   /\   | \ | |  __ \ / ____|
+%| |   | |  | | \  / | \  / |  /  \  |  \| | |  | | (___
+%| |   | |  | | |\/| | |\/| | / /\ \ | . ` | |  | |\___ \
+%| |___| |__| | |  | | |  | |/ ____ \| |\  | |__| |____) |
+% \_____\____/|_|  |_|_|  |_/_/    \_\_| \_|_____/|_____/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% SYNTAX FOR NEW COMMANDS:
+%\newcommand{\new}{Old command or text}
+
+% EXAMPLE:
+
+\newcommand{\blah}{blah blah blah \dots}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  _______ ______          _____ _    _ ______ _____  	%
+% |__   __|  ____|   /\   / ____| |  | |  ____|  __ \ 	%
+%    | |  | |__     /  \ | |    | |__| | |__  | |__) |	%
+%    | |  |  __|   / /\ \| |    |  __  |  __| |  _  / 	%
+%    | |  | |____ / ____ \ |____| |  | | |____| | \ \ 	%
+%    |_|  |______/_/    \_\_____|_|  |_|______|_|  \_\	%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%														%
+% 			COMMANDS				SUMMARY				%
+% \clarity{points}{comment} >>> "Clarity of Writing"	%
+% \other{points}{comment}	>>> "Other"					%
+% \spelling{comment}		>>> "Spelling"				%
+% \units{comment}			>>> "Units"					%
+% \english{comment}			>>> "Syntax and Grammer"	%
+% \source{comment}			>>> "Sources"				%
+% \concept{comment}			>>> "Concept"				%
+% \missing{comment}			>>> "Missing Content"		%
+% \maths{comment}			>>> "Math"					%
+% \terms{comment}			>>> "Science Terms"			%
+%														%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setlength{\marginparwidth}{3.4cm}
+
+
+% NEW COUNTERS
+\newcounter{points}
+\setcounter{points}{100}
+\newcounter{spelling}
+\newcounter{english}
+\newcounter{units}
+\newcounter{other}
+\newcounter{source}
+\newcounter{concept}
+\newcounter{missing}
+\newcounter{math}
+\newcounter{terms}
+\newcounter{clarity}
+\newcounter{late}
+
+% COMMANDS
+
+\newcommand{\late}{\todo{late submittal (-5)}
+\addtocounter{late}{-5}
+\addtocounter{points}{-5}}
+
+\definecolor{pink}{RGB}{255,182,193}
+\newcommand{\hlp}[2][pink]{ {\sethlcolor{#1} \hl{#2}} }
+
+\definecolor{myblue}{rgb}{0.668, 0.805, 0.929}
+\newcommand{\hlb}[2][myblue]{ {\sethlcolor{#1} \hl{#2}} }
+
+\newcommand{\clarity}[2]{\todo[color=CornflowerBlue!50]{CLARITY of WRITING(#1) #2}\addtocounter{points}{#1}
+\addtocounter{clarity}{#1}}
+
+\newcommand{\other}[2]{\todo{OTHER(#1) #2} \addtocounter{points}{#1} \addtocounter{other}{#1}}
+
+\newcommand{\spelling}{\todo[color=CornflowerBlue!50]{SPELLING (-1)} \addtocounter{points}{-1}
+\addtocounter{spelling}{-1}}
+\newcommand{\units}{\todo{UNITS (-1)} \addtocounter{points}{-1}
+\addtocounter{units}{-1}}
+
+\newcommand{\english}{\todo[color=CornflowerBlue!50]{SYNTAX and GRAMMAR (-1)} \addtocounter{points}{-1}
+\addtocounter{english}{-1}}
+
+\newcommand{\source}{\todo{SOURCE(S) (-2)} \addtocounter{points}{-2}
+\addtocounter{source}{-2}}
+\newcommand{\concept}{\todo{CONCEPT (-2)} \addtocounter{points}{-2}
+\addtocounter{concept}{-2}}
+
+\newcommand{\missing}[2]{\todo{MISSING CONTENT (#1) #2} \addtocounter{points}{#1}
+\addtocounter{missing}{#1}}
+
+\newcommand{\maths}{\todo{MATH (-1)} \addtocounter{points}{-1}
+\addtocounter{math}{-1}}
+\newcommand{\terms}{\todo[color=CornflowerBlue!50]{SCIENCE TERMS (-1)} \addtocounter{points}{-1}
+\addtocounter{terms}{-1}}
+
+
+\newcommand{\summary}[1]{
+\begin{mdframed}[nobreak=true]
+\begin{minipage}{\textwidth}
+\vspace{0.5cm}
+\begin{center}
+\Large{Grade Summary} \hrule
+\end{center} \vspace{0.5cm}
+General Comments: #1
+
+\vspace{0.5cm}
+Possible Points \dotfill 100 \\
+Points Lost (Late Submittal) \dotfill \thelate \\
+Points Lost (Science Terms) \dotfill \theterms \\
+Points Lost (Syntax and Grammar) \dotfill \theenglish \\
+Points Lost (Spelling) \dotfill \thespelling \\
+Points Lost (Units) \dotfill \theunits \\
+Points Lost (Math) \dotfill \themath \\
+Points Lost (Sources) \dotfill \thesource \\
+Points Lost (Concept) \dotfill \theconcept \\
+Points Lost (Missing Content) \dotfill \themissing \\
+Points Lost (Clarity of Writing) \dotfill \theclarity \\
+Other \dotfill \theother \\[0.5cm]
+\begin{center}
+\large{\textbf{Grade:} \fbox{\thepoints}}
+\end{center}
+\end{minipage}
+\end{mdframed}}
+
+%#########################################################
+
+%To use symbols for footnotes
+\renewcommand*{\thefootnote}{\fnsymbol{footnote}}
+%To change footnotes back to numbers uncomment the following line
+%\renewcommand*{\thefootnote}{\arabic{footnote}}
+
+% Enable this command to adjust line spacing for inline math equations.
+% \everymath{\displaystyle}
+
+% _______ _____ _______ _      ______
+%|__   __|_   _|__   __| |    |  ____|
+%   | |    | |    | |  | |    | |__
+%   | |    | |    | |  | |    |  __|
+%   | |   _| |_   | |  | |____| |____
+%   |_|  |_____|  |_|  |______|______|
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{
+\normalfont \normalsize
+\textsc{Introduction to Image Processing and Computer Vision} \\
+[10pt]
+\rule{\linewidth}{0.5pt} \\[6pt]
+\huge Assignment no 1 - Nail Segmentation \\
+\rule{\linewidth}{2pt}  \\[10pt]
+}
+\author{Paulina Pacyna}
+\date{\normalsize \today}
+
+\begin{document}
+
+\maketitle
+\noindent
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%			  ______      ____
+%			 |  ____/\   / __ \
+%			 | |__ /  \ | |  | |
+%			 |  __/ /\ \| |  | |
+%			 | | / ____ \ |__| |
+%			 |_|/_/    \_\___\_\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%
+% Ctrl + / to comment out a group of lines.
+%
+%
+% LIST MORE COMMON COMMMANDS
+% LIST USEFUL WEBSITES FOR TABLES, ETC
+% WHAT TO DO WHEN YOUR CODE WONT COMPILE
+% OVERLEAF SHORTCUTS
+%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% _               ____
+%| |        /\   |  _ \
+%| |       /  \  | |_) |
+%| |      / /\ \ |  _ <
+%| |____ / ____ \| |_) |
+%|______/_/    \_\____/
+%%%%%%%%%%%%%%%%%%%%%%%%
+%  _____ _______       _____ _______ _____
+% / ____|__   __|/\   |  __ \__   __/ ____|
+%| (___    | |  /  \  | |__) | | | | (___
+% \___ \   | | / /\ \ |  _  /  | |  \___ \
+% ____) |  | |/ ____ \| | \ \  | |  ____) |
+%|_____/   |_/_/    \_\_|  \_\ |_| |_____/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% _    _ ______ _____  ______
+%| |  | |  ____|  __ \|  ____|
+%| |__| | |__  | |__) | |__
+%|  __  |  __| |  _  /|  __|
+%| |  | | |____| | \ \| |____
+%|_|  |_|______|_|  \_\______|
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+Image segmentation is a process of determining which pixels of the image belong to a certain object.
+Usually we represent the object with a mask. Mask of an object is binary picture with white pixels indicating the object and black pixels indicating the background. In this project, we try to separate nails from the hand and from various background overall.
+
+\section{Input}
+The input consist of 52 images. Images present different gestures, for example open hand, closed fist, side view. Hands are presented on diverse backgrounds and in various lighting condition.
+
+examples
+
+\section{Hand segmentation}
+The first step is to separate hand from the background, therefore next processing steps are independent from the background.
+We begin with converting the color space from RGB to HSV. The color of the skin is hard to express in terms of red, blue and green proportions. However, we can state that hue of the skin varies from yellow to red, the saturation is medium and brigthness is high. One exception is when lighting condition is bad, or the skin is very pale, blueish. In this case the hue varies from blue to red, saturation is low and brightness is high.
+Formally, we consider two cases:
+$$(hue \in (0,20) \wedge saturation \in (20,180) \wedge value \in (80,255))$$
+$$\vee$$
+$$(hue \in (115,180) \wedge saturation \in (14,50) \wedge value \in (120,255))$$
+
+We perform the segmentation based on HSV color space. Then we apply median blurring, which closes small holes and removes single pixels.
+Sometimes the background contains some brown, gray and pink features. We can eliminate them, by picking the biggest component.
+Finally, we combine the mask with the original picture.
+
+\begin{lstlisting}
+def hand_recognition(image):
+    lower1 = np.array([0, 30, 80])
+    upper1 = np.array([20, 180, 255])
+    lower2 = np.array([115, 14, 120])
+    upper2 = np.array([180, 50, 255])
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    mask_hsv1 = cv2.inRange(hsv, lower1, upper1)
+    mask_hsv2 = cv2.inRange(hsv, lower2, upper2)
+    mask_hsv = cv2.bitwise_or(mask_hsv1, mask_hsv2)
+    blurred = cv2.medianBlur(mask_hsv, 5)
+    largest = largest_component_mask(blurred)
+    return largest, cv2.bitwise_and(image, image, mask=largest)
+\end{lstlisting}
+We perform the segmentation based on HSV color space. Then we apply median blurring, which closes small holes and removes single pixels.
+Sometimes the background contains some brown, gray and pink features. We can eliminate them, by picking the biggest component.
+Finally, we combine the mask with the original picture.
+We return the binary mask and segmented hand.
+
+
+\section{Equalization}
+After segmenting the hand, we perform equalization on each HSV channel. In our case the \texttt{hsv} parameter is set to \texttt{True}.
+\begin{lstlisting}
+def equalization(image, hsv=False):
+    if hsv == True:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    channels = cv2.split(image)
+    for i, plane in enumerate(channels):
+        channels[i] = cv2.equalizeHist(plane)
+    image = cv2.merge(channels)
+    if hsv == True:
+        image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
+    return image
+\end{lstlisting}
+
+\section{Skin segmentation based on confidence intervals}
+
+Usually nails posses some different color than the skin, but stating the difference between skin color and nail color is difficult. Sometimes nails are more pink than the skin, but sometimes they are polished. Sometimes the difference is sharp, but sometimes they differ only a bit. Defining an explicite threshold is impossible. However, we can assume that the skin is usually homogeneous, and try to recognize which pixels belong to the skin itself. Then we can mark pixels belonging to hand, but not to skin as nails.
+We can observe that the skin covers the most of hand area, so the average color will belong to the skin. Based on that information, we can assume, that colors belonging to skin are contained in an multivariate confidence interval.
+
+%$$ (h,s,v) \in Skin \Longleftrightarrow$$
+%$$ (h,s,v) \in \frac{1}{|Hand|}\sum_{(h,s,v)\in Hand} h -$$
+
+\begin{lstlisting}
+def confidence_interval_extraction(
+    image, hand, eps
+):
+    image = equalization(image, hsv=True)
+    lower = [0, 0, 0]
+    upper = [0, 0, 0]
+    channels = cv2.split(image)
+    for i in range(3):
+        channel = channels[i]
+        average = np.mean(
+            channel.reshape(1, -1)[hand.reshape(1, -1) > 0]
+        )  # restricting to the hand mask
+        stderr = np.std(channel.reshape(1, -1)[hand.reshape(1, -1) > 0])
+        lower[i] = average - eps * stderr
+        upper[i] = average + eps * stderr
+    mask = cv2.bitwise_not(cv2.inRange(image, np.array(lower), np.array(upper)))
+    hand = cv2.morphologyEx(
+        hand,
+        cv2.MORPH_ERODE,
+        kernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)),
+    )
+    return cv2.medianBlur(cv2.bitwise_and(mask, hand), 7)
+\end{lstlisting}
+We calculate the mean color of each channel of the hand and the standard error. Then we calculate the confidence interval for each channel.
+Then we choose colors that are not in the interval - that mean these pixels does not belong to skin. We intersect pixels not belonging to skin with hand. We return blurred mask.
+
+
+
+\section {Materials}
+
+% Materials go here
+
+
+%%%%%%%%%%%%%%%%%%%%%%%
+% FOR A NUMBERED LIST
+% \begin{enumerate}
+% \item Your_Item
+% \end{enumerate}
+%%%%%%%%%%%%%%%%%%%%%%%
+% FOR A BULLETED LIST
+% \begin{itemize}
+% \item Your_Item
+% \end{itemize}
+%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
+
+
+%#################################################################
+% _____  _____   ____   _____ ______ _____  _    _ _____  ______
+%|  __ \|  __ \ / __ \ / ____|  ____|  __ \| |  | |  __ \|  ____|
+%| |__) | |__) | |  | | |    | |__  | |  | | |  | | |__) | |__
+%|  ___/|  _  /| |  | | |    |  __| | |  | | |  | |  _  /|  __|
+%| |    | | \ \| |__| | |____| |____| |__| | |__| | | \ \| |____
+%|_|    |_|  \_\\____/ \_____|______|_____/ \____/|_|  \_\______|
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section {Procedure}
+%%%%%%%%%%%%%%%%%%%%%%%
+% FOR A NUMBERED LIST
+% \begin{enumerate}
+% \item Your_Item
+% \end{enumerate}
+%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
+
+
+
+%##################################################################
+
+% _____       _______
+%|  __ \   /\|__   __|/\
+%| |  | | /  \  | |  /  \
+%| |  | |/ /\ \ | | / /\ \
+%| |__| / ____ \| |/ ____ \
+%|_____/_/    \_\_/_/    \_\
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section {Data}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TO IMPORT AN IMAGE
+% UPLOAD IT FIRST (HIT THE PROJECT BUTTON TO SHOW FILES)
+% KEEP THE NAME SHORT WITH NO SPACES!
+% TYPE THE FOLLOWING WITH THE NAME OF YOUR FILE
+% DON'T INCLUDE THE FILE EXTENSION
+% \includegraphics[width=\textwidth]{name_of_file}
+% \textwidth makes the picture the width of the paragraphs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TO CREATE A FIGURE WITH A NUMBER AND CAPTION
+% \begin{figure}
+% \includegraphics[width=\textwidth]{image}
+% \caption{Your Caption Goes Here}
+% \label{your_label}
+% \end{figure}
+% REFER TO YOUR FIGURE LATER WITH
+% \ref{your_label}
+% LABELS NEED TO BE ONE WORD
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
+
+
+
+
+%#############################
+
+% _____ _____  _____  _____ _    _  _____ _____
+%|  __ \_   _|/ ____|/ ____| |  | |/ ____/ ____|
+%| |  | || | | (___ | |    | |  | | (___| (___
+%| |  | || |  \___ \| |    | |  | |\___ \\___ \
+%| |__| || |_ ____) | |____| |__| |____) |___) |
+%|_____/_____|_____/ \_____|\____/|_____/_____/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section {Discussion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
+
+
+\subsection{Definitions}
+% Include your sources!
+%%%%%%%%%%%%%%%%%%%%%%%
+% LIST OF DEFINITIONS
+% \begin{description}
+% \item [WORD] {Definition}
+% \end{description}
+%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
+\subsection{Results}
+% State your main discovery based on the experimental data.
+
+
+
+
+
+
+\subsection{Questions}
+% Write full question and format answers in ITALIC
+% CTRL + I for ITALIC
+
+
+
+
+
+
+
+\subsection{Critique}
+% Discuss precision of measurements and instruments.
+% Suggest improvements for future labs.
+
+
+
+
+
+
+
+%###############################################
+%  _____ ____  _   _  _____ _     _    _ _____  ______
+% / ____/ __ \| \ | |/ ____| |   | |  | |  __ \|  ____|
+%| |   | |  | |  \| | |    | |   | |  | | |  | | |__
+%| |   | |  | | . ` | |    | |   | |  | | |  | |  __|
+%| |___| |__| | |\  | |____| |___| |__| | |__| | |____
+% \_____\____/|_| \_|\_____|______\____/|_____/|______|
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusion}
+%#######################################################
+
+
+
+
+%  _____  ____  _    _ _____   _____ ______  _____
+% / ____|/ __ \| |  | |  __ \ / ____|  ____|/ ____|
+%| (___ | |  | | |  | | |__) | |    | |__  | (___
+% \___ \| |  | | |  | |  _  /| |    |  __|  \___ \
+% ____) | |__| | |__| | | \ \| |____| |____ ____) |
+%|_____/ \____/ \____/|_|  \_\\_____|______|_____/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% USE NOCITE TO ADD SOURCES TO THE BIBLIOGRAPHY WITHOUT SPECIFICALLY CITING THEM IN THE DOCUMENT
+
+%\nocite{ref_num}
+%\nocite{zhixiong_modelling_2015}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+			% BIBLIOGRAPHY: %
+
+% Make sure your class *.bib file is uploaded to this project by clicking the project button > add files. Change 'sample' below to the name of your file without the .bib extension.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%  \bibliographystyle{plainnat}
+%  \bibliography{bibliography}
+
+% UNCOMMENT THE TWO LINES ABOVE TO ENABLE BIBLIOGRAPHY
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%		SHOW GRADE SUMMARY
+
+%\newpage
+%\summary{}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\end{document} % NOTHING AFTER THIS LINE IS PART OF THE DOCUMENT
+ ______ ______ ______ ______ ______ ______ ______
+|______|______|______|______|______|______|______|
+				  _____  ____
+				 / ____|/ __ \
+				| |  __  |  | |
+				| | |_ | |  | |
+				| |__| | |__| |
+				 \_____|\____/
+
+ _    _  ____  _____  _   _ ______ _______ _____ _
+| |  | |/ __ \|  __ \| \ | |  ____|__   __/ ____| |
+| |__| | |  | | |__) |  \| | |__     | | | (___ | |
+|  __  | |  | |  _  /| . ` |  __|    | |  \___ \| |
+| |  | | |__| | | \ \| |\  | |____   | |  ____) |_|
+|_|  |_|\____/|_|  \_\_| \_|______|  |_| |_____/(_)
+
+ ______ ______ ______ ______ ______ ______ ______
+|______|______|______|______|______|______|______|

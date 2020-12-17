@@ -304,7 +304,7 @@ def coeff2():
     return (best_point, result)
 
 
-def mean_threshold(image, hand, error=1.3, median=True, hsv=False):
+def saturation_extraction(image, hand, error=1.3, median=True, hsv=False):
     if hsv == True:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     avg = np.median if median else np.mean
@@ -322,7 +322,7 @@ def mean_threshold(image, hand, error=1.3, median=True, hsv=False):
     return cv2.medianBlur(cv2.bitwise_and(mask, hand), 7)
 
 
-def mean_threshold2(image, hand, error=1.3, median=False, hsv=False):
+def confidence_interval_extraction(image, hand, error=1.3, median=False, hsv=False):
     if hsv == True:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     avg = np.median if median else np.mean
@@ -364,23 +364,33 @@ def solution(image, type, if_clahe_mask, clahe_hsv, error, median, hsv, last_typ
     clahed_component = equalization_or_clahe(type)(
         component, mask=None if if_clahe_mask else final_mask, hsv=clahe_hsv
     )
-    last = mean_threshold2 if last_type == 2 else mean_threshold
+    last = confidence_interval_extraction if last_type == 2 else saturation_extraction
     return last(clahed_component, final_mask, error, median, hsv)
 
 
 def main():
     assess = []
     for filename, image in images.items():
-        params = [(image, 2, False, True, 1.3 + 9, True, False, 2)]
+        params = itertools.product(
+            [image],
+            [0, 1, 2],
+            [True, False],
+            [True, False],
+            [0.5, 1, 1.3, 1.5, 1.7, 2],
+            [True, False],
+            [True, False],
+            [1, 2],
+        )
 
         i = [iou(filename, solution(*param)) for param in params]
-        cv2.namedWindow(filename + f"    iou: {i}", cv2.WINDOW_NORMAL)
+        """
+        cv2.namedWindow(filename + f"    iou: {i}", cv2.WINDOW_NORMAL) 
         cv2.imshow(
             filename + f"    iou: {i}",
             side_by_side(image, *[solution(*param) for param in params]),
         ),
         cv2.resizeWindow(filename + f"    iou: {i}", 600, 600)
-        cv2.waitKey(0)
+        cv2.waitKey(0)"""
         assess.append(i)
 
     params = list(
@@ -413,3 +423,5 @@ if __name__ == "__main__":
     if Tryb == 0:
         err = [50, 50, 300]
         d = main()
+        print(d)
+        d.to_csv("params26-12.csv")
