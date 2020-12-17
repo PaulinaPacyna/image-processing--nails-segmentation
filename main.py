@@ -3,6 +3,7 @@ import os
 import cv2
 import numpy as np
 import unused as un
+import scipy.optimize as op
 
 
 def side_by_side(*images):
@@ -168,91 +169,33 @@ def Sobel(gray, k=3):
     )
 
 
-def main():
-    for filename, image in images.items():
-        cv2.namedWindow(filename, cv2.WINDOW_NORMAL)
-        final_mask = largest_component_mask(hsv_mask(image))
-        component = cv2.bitwise_and(image, image, mask=final_mask)
-        clahed_component = equalization(component, mask=final_mask, hsv=True)
-        r = min(image.shape[:2]) // 50
-        r = r if r % 2 else r + 1
-        cv2.resizeWindow(filename, 1000, 600)
-        cv2.imshow(
-            filename,
-            side_by_side(
-                convert(
-                    np.array(
-                        [
-                            np.array(
-                                [np.array(Sobel(split)) for split in cv2.split((img))]
-                            )
-                            for img in [
-                                equalization(component),
-                                equalization(component, hsv=True),
-                                equalization(
-                                    component,
-                                    mask=final_mask,
-                                ),
-                                equalization(component, mask=final_mask, hsv=True),
-                            ]
-                        ]
-                    )
-                    .sum(axis=0)
-                    .sum(axis=0)
-                    .sum(axis=0)
-                ),
-                convert(
-                    np.array(
-                        [
-                            np.array(
-                                [
-                                    np.array(Sobel(split))
-                                    for split in cv2.split(cv2.medianBlur(img, 5))
-                                ]
-                            )
-                            for img in [
-                                equalization(component),
-                                equalization(component, hsv=True),
-                                equalization(
-                                    component,
-                                    mask=final_mask,
-                                ),
-                                equalization(component, mask=final_mask, hsv=True),
-                            ]
-                        ]
-                    )
-                    .sum(axis=0)
-                    .sum(axis=0)
-                    .sum(axis=0)
-                ),
-                convert(
-                    np.array(
-                        [
-                            np.array(
-                                [
-                                    np.array(Sobel(split))
-                                    for split in cv2.split(cv2.medianBlur(img, 11))
-                                ]
-                            )
-                            for img in [
-                                equalization(component),
-                                equalization(component, hsv=True),
-                                equalization(
-                                    component,
-                                    mask=final_mask,
-                                ),
-                                equalization(component, mask=final_mask, hsv=True),
-                            ]
-                        ]
-                    )
-                    .sum(axis=0)
-                    .sum(axis=0)
-                    .sum(axis=0)
-                ),
-            ),
-        ),
+def mean_extraction(image, error=None, median=False, hsv=False):
+    avg = np.median if median else np.mean
+    if error is None:
+        error = [50, 50, 50]
+    if hsv:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    channels = cv2.split(image)
+    average = [
+        avg(channel.reshape(1, -1)[channel.reshape(1, -1) > 0]) for channel in channels
+    ]
+    lower, upper = np.array(average) - np.array(error), np.array(average) + np.array(
+        error
+    )
+    mask = cv2.inRange(image, lower, upper)
+    if hsv:
+        image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
+    return cv2.medianBlur(mask, 7)
 
-        cv2.waitKey(0)
+
+def nails_mean_extraction(image, hand_mask, error=None, median=False, hsv=False):
+    nails = cv2.bitwise_not(mean_extraction(image, error, median, hsv))
+    return cv2.bitwise_and(nails, hand_mask)
+
+
+def nails_mean_extraction2(no_nails, hand_mask):
+    nails = cv2.bitwise_not(no_nails)
+    return cv2.bitwise_and(nails, hand_mask)
 
 
 def equalization(image, mask=None, hsv=False):
@@ -272,14 +215,148 @@ def equalization(image, mask=None, hsv=False):
     return image
 
 
+def iou(filename, image):
+    if filename == "000.jpg":
+        return 0
+    test = tests[filename]
+    if test.ndim == 3:
+        test = cv2.split(test)[0]
+    if image.ndim == 3:
+        image = cv2.split(image)[0]
+    intersection = cv2.bitwise_and(image, test).sum(axis=0).sum()
+    union = cv2.bitwise_or(image, test)
+    return np.sum(intersection) / np.sum(union)
+
+
+def coeff():
+    components = {}
+    hand_masks = {}
+    for filename, image in images.items():
+        final_mask = largest_component_mask(hsv_mask(image))
+        component = cv2.bitwise_and(image, image, mask=final_mask)
+        components[filename] = component
+        hand_masks[filename] = final_mask
+
+    def mean_iou(error):
+        return -np.mean(
+            [
+                iou(
+                    filename,
+                    nails_mean_extraction(
+                        components[filename],
+                        hand_masks[filename],
+                        error=error,
+                        hsv=True,
+                    ),
+                )
+                for filename in images.keys()
+            ]
+        )
+
+    opt = op.dual_annealing(mean_iou, ((0, 100), (0, 100), (0, 100)), maxiter=100)
+    return opt
+
+
+def coeff2():
+    global result
+    components = {}
+    hand_masks = {}
+    for filename, image in images.items():
+        final_mask = largest_component_mask(hsv_mask(image))
+        component = cv2.bitwise_and(image, image, mask=final_mask)
+        components[filename] = component
+        hand_masks[filename] = final_mask
+
+    def mean_iou(error):
+        return -np.mean(
+            [
+                iou(
+                    filename,
+                    nails_mean_extraction(
+                        components[filename],
+                        hand_masks[filename],
+                        error=error,
+                        hsv=True,
+                    ),
+                )
+                for filename in images.keys()
+            ]
+        )
+
+    ran = [10, 100, 10]
+    best = -100000000000000000
+    for x in range(*ran):
+        print(x)
+        for y in range(*ran):
+
+            p = [x, y, 200]
+            result = mean_iou(p)
+            if best < result:
+                best_point = p
+                best = result
+    return (best_point, result)
+
+
+def mean_threshold(image, hand, error=1.3, median=True):
+
+    avg = np.median if median else np.mean
+    if error is None:
+        error = [50, 50, 50]
+    channel = cv2.split(image)[1]
+    average = avg(channel.reshape(1, -1)[hand.reshape(1, -1) > 0])
+    stderr = np.std(channel.reshape(1, -1)[channel.reshape(1, -1) > 0])
+    mask = cv2.threshold(
+        channel, average - error * stderr, 255, type=cv2.THRESH_BINARY_INV
+    )[1]
+    hand = cv2.morphologyEx(
+        hand,
+        cv2.MORPH_ERODE,
+        kernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)),
+    )
+    return cv2.bitwise_and(mask, hand)
+
+
+def main():
+    for filename, image in images.items():
+        cv2.namedWindow(
+            filename + f"    iou: {iou(filename, image)}", cv2.WINDOW_NORMAL
+        )
+        final_mask = largest_component_mask(hsv_mask(image))
+        component = cv2.bitwise_and(image, image, mask=final_mask)
+        clahed_component = equalization(component, mask=final_mask, hsv=True)
+        r = min(image.shape[:2]) // 50
+        r = r if r % 2 else r + 1
+        err = [60, 150, 200]
+        cv2.imshow(
+            filename + f"    iou: {iou(filename, image)}",
+            side_by_side(
+                mean_threshold(clahed_component, final_mask),
+                nails_mean_extraction(
+                    clahed_component, final_mask, error=err, hsv=False
+                ),
+                nails_mean_extraction(
+                    clahed_component, final_mask, error=[30, 200, 200], hsv=False
+                ),
+                nails_mean_extraction(
+                    clahed_component, final_mask, error=err, hsv=False, median=True
+                ),
+            ),
+        ),
+
+        cv2.resizeWindow(filename + f"    iou: {iou(filename, image)}", 600, 600)
+        cv2.waitKey(0)
+
+
 if __name__ == "__main__":
     images = {}
-    test = {}
+    tests = {}
     for file in glob.glob(os.path.join("nails_segmentation", "images", "*.jpg")):
         # for file in  np.random.choice(glob.glob("*.jpg"), 3):
-        images[file] = cv2.imread(file)
+        images[os.path.basename(file)] = cv2.imread(file)
 
     for file in glob.glob(os.path.join("nails_segmentation", "labels", "*.jpg")):
-        test[file] = cv2.imread(file)
-
-    main()
+        tests[os.path.basename(file)] = cv2.imread(file)
+    Tryb = 0
+    if Tryb == 0:
+        err = [50, 50, 300]
+        main()
