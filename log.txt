@@ -1,0 +1,35 @@
+     fun: -0.19878263976141164
+ message: ['Maximum number of iteration reached']
+    nfev: 6073
+    nhev: 0
+     nit: 1000
+    njev: 18
+  status: 0
+ success: True
+       x: array([  6.64462885, 149.99482018, 149.98776423])                                          params       iou
+0        (image, 0, True, True, 0.5, True, True)  0.188391
+1       (image, 0, True, True, 0.5, True, False)  0.038328
+2       (image, 0, True, True, 0.5, False, True)  0.182616
+3      (image, 0, True, True, 0.5, False, False)  0.035843
+4          (image, 0, True, True, 1, True, True)  0.223773
+..                                           ...       ...
+283  (image, 2, False, False, 1.7, False, False)  0.010473
+284      (image, 2, False, False, 2, True, True)  0.007677
+285     (image, 2, False, False, 2, True, False)  0.003364
+286     (image, 2, False, False, 2, False, True)  0.009703
+287    (image, 2, False, False, 2, False, False)  0.002194
+
+[288 rows x 2 columns]                                           params       iou
+0      (image, 0, True, True, 0.5, True, True, 1)  0.188391
+1      (image, 0, True, True, 0.5, True, True, 2)  0.103062
+2     (image, 0, True, True, 0.5, True, False, 1)  0.038328
+3     (image, 0, True, True, 0.5, True, False, 2)  0.102086
+4     (image, 0, True, True, 0.5, False, True, 1)  0.182616
+..                                            ...       ...
+571   (image, 2, False, False, 2, True, False, 2)  0.013677
+572   (image, 2, False, False, 2, False, True, 1)  0.009996
+573   (image, 2, False, False, 2, False, True, 2)  0.155012
+574  (image, 2, False, False, 2, False, False, 1)  0.002199
+575  (image, 2, False, False, 2, False, False, 2)  0.013260
+
+[576 rows x 2 columns]

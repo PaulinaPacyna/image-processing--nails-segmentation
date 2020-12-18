@@ -1,0 +1,9 @@
+     fun: -0.18534910348899056
+ message: ['Maximum number of iteration reached']
+    nfev: 629
+    nhev: 0
+     nit: 100
+    njev: 7
+  status: 0
+ success: True
+       x: array([ 5.42678922, 99.3531168 , 99.53511398])([0, 0, 200], -0.1272131223656425)([10, 10, 200], -0.1272131223656425)

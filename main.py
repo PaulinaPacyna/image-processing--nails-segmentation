@@ -2,8 +2,9 @@ import glob
 import os
 import cv2
 import numpy as np
-import unused as un
 import scipy.optimize as op
+import itertools
+import pandas as pd
 
 
 def side_by_side(*images):
@@ -38,13 +39,6 @@ def side_by_side(*images):
         return side_by_side_9(*images[:9])
 
 
-def hsv_tresholding(image, lower, upper):
-    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    lower = np.array(lower)
-    upper = np.array(upper)
-    return cv2.inRange(hsv, lower, upper)
-
-
 def hsv_mask(
     image,
     lower1=None,
@@ -62,8 +56,14 @@ def hsv_mask(
         upper1 = [20, 180, 255]
     if lower1 is None:
         lower1 = [0, 30, 80]
-    mask_hsv1 = hsv_tresholding(image, lower1, upper1)
-    mask_hsv2 = hsv_tresholding(image, lower2, upper2)
+    hsv1 = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    lower = np.array(lower1)
+    upper = np.array(upper1)
+    mask_hsv1 = cv2.inRange(hsv1, lower, upper)
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    lower = np.array(lower2)
+    upper = np.array(upper2)
+    mask_hsv2 = cv2.inRange(hsv, lower, upper)
     mask_hsv = cv2.bitwise_or(mask_hsv1, mask_hsv2)
     blurred = cv2.medianBlur(mask_hsv, median_blur)
 
@@ -297,11 +297,10 @@ def coeff2():
     return (best_point, result)
 
 
-def mean_threshold(image, hand, error=1.3, median=True):
-
+def mean_threshold(image, hand, error=1.3, median=True, hsv=False):
+    if hsv == True:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     avg = np.median if median else np.mean
-    if error is None:
-        error = [50, 50, 50]
     channel = cv2.split(image)[1]
     average = avg(channel.reshape(1, -1)[hand.reshape(1, -1) > 0])
     stderr = np.std(channel.reshape(1, -1)[channel.reshape(1, -1) > 0])
@@ -313,38 +312,84 @@ def mean_threshold(image, hand, error=1.3, median=True):
         cv2.MORPH_ERODE,
         kernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)),
     )
-    return cv2.bitwise_and(mask, hand)
+    return cv2.medianBlur(cv2.bitwise_and(mask, hand), 7)
+
+
+def mean_threshold2(image, hand, error=1.3, median=False, hsv=False):
+    if hsv == True:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    avg = np.median if median else np.mean
+    lower = [0, 0, 0]
+    upper = [0, 0, 0]
+    channels = cv2.split(image)
+    for i in range(3):
+        channel = channels[i]
+        average = avg(channel.reshape(1, -1)[hand.reshape(1, -1) > 0])
+        stderr = np.std(channel.reshape(1, -1)[channel.reshape(1, -1) > 0])
+        lower[i] = average - error * stderr
+        upper[i] = average + error * stderr
+    mask = cv2.bitwise_not(cv2.inRange(image, np.array(lower), np.array(upper)))
+    hand = cv2.morphologyEx(
+        hand,
+        cv2.MORPH_ERODE,
+        kernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)),
+    )
+    return cv2.medianBlur(cv2.bitwise_and(mask, hand), 7)
+
+
+def assessment():
+    return np.mean([iou(filename, result) for filename in images.keys()])
+
+
+def equalization_or_clahe(type=0):
+    if type == 0:
+        return lambda x, mask=None, hsv=False: x
+    if type == 1:
+        return clahe
+    if type == 2:
+        return equalization
+
+
+def solution(image, type, if_clahe_mask, clahe_hsv, error, median, hsv, last_type):
+    final_mask = largest_component_mask(hsv_mask(image))
+    component = cv2.bitwise_and(image, image, mask=final_mask)
+    clahed_component = equalization_or_clahe(type)(
+        component, mask=None if if_clahe_mask else final_mask, hsv=clahe_hsv
+    )
+    last = mean_threshold2 if last_type == 2 else mean_threshold
+    return last(clahed_component, final_mask, error, median, hsv)
 
 
 def main():
+    assess = []
     for filename, image in images.items():
-        cv2.namedWindow(
-            filename + f"    iou: {iou(filename, image)}", cv2.WINDOW_NORMAL
-        )
-        final_mask = largest_component_mask(hsv_mask(image))
-        component = cv2.bitwise_and(image, image, mask=final_mask)
-        clahed_component = equalization(component, mask=final_mask, hsv=True)
-        r = min(image.shape[:2]) // 50
-        r = r if r % 2 else r + 1
-        err = [60, 150, 200]
-        cv2.imshow(
-            filename + f"    iou: {iou(filename, image)}",
-            side_by_side(
-                mean_threshold(clahed_component, final_mask),
-                nails_mean_extraction(
-                    clahed_component, final_mask, error=err, hsv=False
-                ),
-                nails_mean_extraction(
-                    clahed_component, final_mask, error=[30, 200, 200], hsv=False
-                ),
-                nails_mean_extraction(
-                    clahed_component, final_mask, error=err, hsv=False, median=True
-                ),
-            ),
-        ),
+        params = [(image, 2, False, True, 0.8, True, False, 1)]
 
-        cv2.resizeWindow(filename + f"    iou: {iou(filename, image)}", 600, 600)
+        i = [iou(filename, solution(*param)) for param in params]
+        cv2.namedWindow(filename + f"    iou: {i}", cv2.WINDOW_NORMAL)
+        cv2.imshow(
+            filename + f"    iou: {i}",
+            side_by_side(image, *[solution(*param) for param in params]),
+        ),
+        cv2.resizeWindow(filename + f"    iou: {i}", 600, 600)
         cv2.waitKey(0)
+        assess.append(i)
+
+    params = list(
+        itertools.product(
+            ["image"],
+            [0, 1, 2],
+            [True, False],
+            [True, False],
+            [0.5, 1, 1.3, 1.5, 1.7, 2],
+            [True, False],
+            [True, False],
+            [1, 2],
+        )
+    )
+    df = pd.DataFrame({"params": params, "iou": np.mean(assess, axis=0)})
+    df.sort_values(by=["iou"], inplace=True)
+    return df
 
 
 if __name__ == "__main__":
@@ -359,4 +404,4 @@ if __name__ == "__main__":
     Tryb = 0
     if Tryb == 0:
         err = [50, 50, 300]
-        main()
+        d = main()
