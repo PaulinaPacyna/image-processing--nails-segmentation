@@ -368,32 +368,31 @@ def solution(image, type, if_clahe_mask, clahe_hsv, error, median, hsv, last_typ
     return last(clahed_component, final_mask, error, median, hsv)
 
 
-def main():
+def solution2(image, type, if_clahe_mask, clahe_hsv, error, median, hsv, last_type):
+    final_mask = largest_component_mask(hsv_mask(image))
+    component = cv2.bitwise_and(image, image, mask=final_mask)
+    clahed_component = component
+    last = saturation_extraction
+    return last(clahed_component, final_mask, error, median, hsv)
+
+
+def main(DISPLAY):
     assess = []
     for filename, image in images.items():
-        params = itertools.product(
-            [image],
-            [0, 1, 2],
-            [True, False],
-            [True, False],
-            [0.5, 1, 1.3, 1.5, 1.7, 2],
-            [True, False],
-            [True, False],
-            [1, 2],
-        )
+        params = [(image, 0, False, False, 1, False, True, 1)]
 
-        i = [iou(filename, solution(*param)) for param in params]
-        """
-        cv2.namedWindow(filename + f"    iou: {i}", cv2.WINDOW_NORMAL) 
-        cv2.imshow(
-            filename + f"    iou: {i}",
-            side_by_side(image, *[solution(*param) for param in params]),
-        ),
-        cv2.resizeWindow(filename + f"    iou: {i}", 600, 600)
-        cv2.waitKey(0)"""
+        i = [iou(filename, solution2(*param)) for param in params]
+        if DISPLAY:
+            cv2.namedWindow(filename + f"    iou: {i}", cv2.WINDOW_NORMAL)
+            cv2.imshow(
+                filename + f"    iou: {i}",
+                side_by_side(image, *[solution2(*param) for param in params]),
+            ),
+            cv2.resizeWindow(filename + f"    iou: {i}", 600, 600)
+            cv2.waitKey(0)
         assess.append(i)
 
-    params = list(
+    params = """list(
         itertools.product(
             ["image"],
             [0, 1, 2],
@@ -404,7 +403,7 @@ def main():
             [True, False],
             [1, 2],
         )
-    )
+    )"""
     df = pd.DataFrame({"params": params, "iou": np.mean(assess, axis=0)})
     df.sort_values(by=["iou"], inplace=True)
     return df
@@ -422,6 +421,6 @@ if __name__ == "__main__":
     Tryb = 0
     if Tryb == 0:
         err = [50, 50, 300]
-        d = main()
+        d = main(True)
         print(d)
         d.to_csv("params26-12.csv")

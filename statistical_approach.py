@@ -73,6 +73,24 @@ def confidence_interval_extraction(
     return nails_mask, cv2.bitwise_and(image, image, mask=nails_mask)
 
 
+def saturation_extraction(image, hand, eps):
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    saturation = cv2.split(image)[1]
+    average = np.mean(saturation.reshape(-1)[hand.reshape(-1) > 0])
+    stderr = np.std(saturation.reshape(-1)[hand.reshape(-1) > 0])
+    mask = cv2.threshold(
+        saturation, average - eps * stderr, 255, type=cv2.THRESH_BINARY_INV
+    )[1]
+    hand = cv2.morphologyEx(
+        hand,
+        cv2.MORPH_ERODE,
+        kernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)),
+    )
+    nails_mask = cv2.medianBlur(cv2.bitwise_and(mask, hand), 7)
+
+    return nails_mask, cv2.bitwise_and(image, image, mask=nails_mask)
+
+
 def iou(filename, image):
     if filename == "000.jpg":
         return 0
@@ -99,7 +117,7 @@ def dice(filename, image):
 
 
 if __name__ == "__main__":
-    DISPLAY = False
+    DISPLAY = 1
     images = {}
     tests = {}
     for file in glob.glob(os.path.join("nails_segmentation", "images", "*.jpg")):
@@ -115,9 +133,9 @@ if __name__ == "__main__":
 
     for filename, image in images.items():
         hand_mask, hand = hand_recognition(image)
-        nails_mask, nails = confidence_interval_extraction(hand, hand_mask, 1.5)
-        iou_array.append(iou(filename, image))
-        dice_array.append(dice(filename, image))
+        nails_mask, nails = saturation_extraction(hand, hand_mask, 1)
+        iou_array.append(iou(filename, nails_mask))
+        dice_array.append(dice(filename, nails_mask))
         if DISPLAY:
             images_to_plot = [
                 (image, "Original image"),
@@ -125,7 +143,7 @@ if __name__ == "__main__":
                 (equalization(hand, True), "Hand after equalization"),
                 (
                     nails,
-                    f"Extracted nails, iou: {iou(filename,image)}, dice: {dice(filename,image)}",
+                    f"Extracted nails, iou: {iou(filename,nails_mask)}, dice: {dice(filename,nails_mask)}",
                 ),
             ]
             for col, img in enumerate(images_to_plot):
