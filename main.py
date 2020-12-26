@@ -5,6 +5,7 @@ import numpy as np
 import scipy.optimize as op
 import itertools
 import pandas as pd
+from scipy.stats import norm
 
 
 def side_by_side(*images):
@@ -90,16 +91,11 @@ def clahe(image, mask=None, hsv=False):
     for i, plane in enumerate(channels):
         channels[i] = clahe.apply(plane)
     image = cv2.merge(channels)
-    # image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
     if mask is not None:
         image = cv2.bitwise_and(image, image, mask=mask)
     if hsv == True:
         image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
     return image
-
-
-def purple(image):
-    pass
 
 
 def largest_component_mask(bin_img):
@@ -207,11 +203,10 @@ def equalization(image, mask=None, hsv=False):
     for i, plane in enumerate(channels):
         channels[i] = cv2.equalizeHist(plane)
     image = cv2.merge(channels)
-    # image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
     if mask is not None:
         image = cv2.bitwise_and(image, image, mask=mask)
-    # if hsv == True:
-    #    image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
+    if hsv == True:
+        image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
     return image
 
 
@@ -223,9 +218,21 @@ def iou(filename, image):
         test = cv2.split(test)[0]
     if image.ndim == 3:
         image = cv2.split(image)[0]
-    intersection = cv2.bitwise_and(image, test).sum(axis=0).sum()
+    intersection = cv2.bitwise_and(image, test)
     union = cv2.bitwise_or(image, test)
     return np.sum(intersection) / np.sum(union)
+
+
+def dice(filename, image):
+    if filename == "000.jpg":
+        return 0
+    test = tests[filename]
+    if test.ndim == 3:
+        test = cv2.split(test)[0]
+    if image.ndim == 3:
+        image = cv2.split(image)[0]
+    intersection = cv2.bitwise_and(image, test)
+    return 2 * np.sum(intersection) / (np.sum(image) + np.sum(test))
 
 
 def coeff():
@@ -302,8 +309,8 @@ def mean_threshold(image, hand, error=1.3, median=True, hsv=False):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     avg = np.median if median else np.mean
     channel = cv2.split(image)[1]
-    average = avg(channel.reshape(1, -1)[hand.reshape(1, -1) > 0])
-    stderr = np.std(channel.reshape(1, -1)[channel.reshape(1, -1) > 0])
+    average = avg(channel.reshape(-1)[hand.reshape(-1) > 0])
+    stderr = np.std(channel.reshape(-1)[hand.reshape(-1) > 0])
     mask = cv2.threshold(
         channel, average - error * stderr, 255, type=cv2.THRESH_BINARY_INV
     )[1]
@@ -324,10 +331,11 @@ def mean_threshold2(image, hand, error=1.3, median=False, hsv=False):
     channels = cv2.split(image)
     for i in range(3):
         channel = channels[i]
-        average = avg(channel.reshape(1, -1)[hand.reshape(1, -1) > 0])
-        stderr = np.std(channel.reshape(1, -1)[channel.reshape(1, -1) > 0])
-        lower[i] = average - error * stderr
-        upper[i] = average + error * stderr
+        channel = channel.reshape(-1)[hand.reshape(-1) > 0]
+        average = avg(channel)
+        stderr = np.std(channel)
+        lower[i] = average - error * stderr / np.sqrt(len(channel))
+        upper[i] = average + error * stderr / np.sqrt(len(channel))
     mask = cv2.bitwise_not(cv2.inRange(image, np.array(lower), np.array(upper)))
     hand = cv2.morphologyEx(
         hand,
@@ -363,7 +371,7 @@ def solution(image, type, if_clahe_mask, clahe_hsv, error, median, hsv, last_typ
 def main():
     assess = []
     for filename, image in images.items():
-        params = [(image, 2, False, True, 0.8, True, False, 1)]
+        params = [(image, 2, False, True, 1.3 + 9, True, False, 2)]
 
         i = [iou(filename, solution(*param)) for param in params]
         cv2.namedWindow(filename + f"    iou: {i}", cv2.WINDOW_NORMAL)
