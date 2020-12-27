@@ -8,7 +8,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-def hand_recognition(image):
+def hand_recognition(image: np.array) -> (np.array, np.array):
+    """Segment hand and corresponding mask from a picture.
+    :param image: BGR image
+    :return: mask, segmented hand on black background"""
     lower1 = np.array([0, 30, 80])
     upper1 = np.array([20, 180, 255])
     lower2 = np.array([115, 14, 120])
@@ -16,14 +19,19 @@ def hand_recognition(image):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     mask_hsv1 = cv2.inRange(hsv, lower1, upper1)
     mask_hsv2 = cv2.inRange(hsv, lower2, upper2)
-    mask_hsv = cv2.bitwise_or(mask_hsv1, mask_hsv2)
+    mask_hsv = cv2.bitwise_or(mask_hsv1, mask_hsv2)  # combining two masks
     blurred = cv2.medianBlur(mask_hsv, 5)
     largest = largest_component_mask(blurred)
     return largest, cv2.bitwise_and(image, image, mask=largest)
 
 
-def largest_component_mask(bin_img):
-    contours = cv2.findContours(bin_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
+def largest_component_mask(binary_image: np.array) -> np.array:
+    """Select a connected component with the largest area.
+    :param binary_image: binary image
+    :return: binary image of the largest component"""
+    contours = cv2.findContours(binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[
+        0
+    ]
     max_area = 0
     max_contour_index = 0
     for i, contour in enumerate(contours):
@@ -31,11 +39,14 @@ def largest_component_mask(bin_img):
         if contour_area > max_area:
             max_area = contour_area
             max_contour_index = i
-    labeled_img = np.zeros(bin_img.shape, dtype=np.uint8)
-    cv2.drawContours(labeled_img, contours, max_contour_index, color=255, thickness=-1)
-    return labeled_img
+    largest_component = np.zeros(binary_image.shape, dtype=np.uint8)
+    cv2.drawContours(
+        largest_component, contours, max_contour_index, color=255, thickness=-1
+    )
+    return largest_component
 
 
+""" 
 def equalization(image, hsv=False):
     if hsv == True:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -46,8 +57,8 @@ def equalization(image, hsv=False):
     if hsv == True:
         image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
     return image
-
-
+"""
+"""
 def confidence_interval_extraction(
     image, hand, eps
 ):  # equalization, no_clahe_mask, hsv equalization, 1.5, mean ,no_hsv_mean_thresh ,CI
@@ -71,11 +82,20 @@ def confidence_interval_extraction(
     )
     nails_mask = cv2.medianBlur(cv2.bitwise_and(mask, hand), 7)
     return nails_mask, cv2.bitwise_and(image, image, mask=nails_mask)
+"""
 
 
-def saturation_extraction(image, hand, eps):
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    saturation = cv2.split(image)[1]
+def saturation_extraction(
+    image: np.array, hand: np.array, eps: float
+) -> (np.array, np.array):
+    """
+    Extract nails from an image of hand based on saturation level.
+    :param image: BGR image of the hand
+    :param hand: mask of the hand
+    :param eps: parameter
+    :return: binary mask, image of extracted nails
+    """
+    saturation = cv2.split(cv2.cvtColor(image, cv2.COLOR_BGR2HSV))[1]
     average = np.mean(saturation.reshape(-1)[hand.reshape(-1) > 0])
     stderr = np.std(saturation.reshape(-1)[hand.reshape(-1) > 0])
     mask = cv2.threshold(
@@ -91,29 +111,39 @@ def saturation_extraction(image, hand, eps):
     return nails_mask, cv2.bitwise_and(image, image, mask=nails_mask)
 
 
-def iou(filename, image):
+def iou(test: np.array, image: np.array) -> float:
+    """
+    Compute Intersection over Union coeffiicient.
+    :param filename: filename of mask provided in test folder
+    :param image: binary mask of nails
+    :return: IoU coefficient
+    """
     if filename == "000.jpg":
         return 0
-    test = tests[filename]
     if test.ndim == 3:
         test = cv2.split(test)[0]
     if image.ndim == 3:
         image = cv2.split(image)[0]
     intersection = cv2.bitwise_and(image, test)
     union = cv2.bitwise_or(image, test)
-    return round(np.sum(intersection) / np.sum(union), 2)
+    return np.sum(intersection) / np.sum(union)
 
 
-def dice(filename, image):
+def dice(test: np.array, image: np.array) -> float:
+    """
+    Compute Dice coeffiicient.
+    :param filename: filename of mask provided in test folder
+    :param image: binary mask of nails
+    :return: Dice coefficient
+    """
     if filename == "000.jpg":
         return 0
-    test = tests[filename]
     if test.ndim == 3:
         test = cv2.split(test)[0]
     if image.ndim == 3:
         image = cv2.split(image)[0]
     intersection = cv2.bitwise_and(image, test)
-    return round(2 * np.sum(intersection) / (np.sum(image) + np.sum(test)), 2)
+    return 2 * np.sum(intersection) / (np.sum(image) + np.sum(test))
 
 
 if __name__ == "__main__":
@@ -121,7 +151,6 @@ if __name__ == "__main__":
     images = {}
     tests = {}
     for file in glob.glob(os.path.join("nails_segmentation", "images", "*.jpg")):
-        # for file in  np.random.choice(glob.glob("*.jpg"), 3):
         images[os.path.basename(file)] = cv2.imread(file)
 
     for file in glob.glob(os.path.join("nails_segmentation", "labels", "*.jpg")):
@@ -133,17 +162,23 @@ if __name__ == "__main__":
 
     for filename, image in images.items():
         hand_mask, hand = hand_recognition(image)
-        nails_mask, nails = saturation_extraction(hand, hand_mask, 1)
-        iou_array.append(iou(filename, nails_mask))
-        dice_array.append(dice(filename, nails_mask))
+        nails_mask, nails = saturation_extraction(hand, hand_mask, 1.04)
+        saturation = cv2.split(cv2.cvtColor(image, cv2.COLOR_BGR2HSV))[1]
+        test = tests[filename]
+        iou_array.append(iou(test, nails_mask))
+        dice_array.append(dice(test, nails_mask))
         if DISPLAY:
             images_to_plot = [
                 (image, "Original image"),
                 (hand, "Extracted hand"),
-                (equalization(hand, True), "Hand after equalization"),
+                (saturation, "Satueation channel"),
                 (
                     nails,
-                    f"Extracted nails, iou: {iou(filename,nails_mask)}, dice: {dice(filename,nails_mask)}",
+                    f"Extracted nails, iou: {round(iou(test, nails_mask),2)}, dice: {round(dice(test, nails_mask),2)}",
+                ),
+                (
+                    test,
+                    f"Ground truth",
                 ),
             ]
             for col, img in enumerate(images_to_plot):
