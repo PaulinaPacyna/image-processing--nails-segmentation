@@ -25,13 +25,11 @@ def hand_recognition(image: np.array) -> (np.array, np.array):
     return largest, cv2.bitwise_and(image, image, mask=largest)
 
 
-def largest_component_mask(binary_image: np.array) -> np.array:
+def largest_component_mask(image: np.array) -> np.array:
     """Select a connected component with the largest area.
-    :param binary_image: binary image
+    :param image: binary image
     :return: binary image of the largest component"""
-    contours = cv2.findContours(binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[
-        0
-    ]
+    contours = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
     max_area = 0
     max_contour_index = 0
     for i, contour in enumerate(contours):
@@ -39,50 +37,11 @@ def largest_component_mask(binary_image: np.array) -> np.array:
         if contour_area > max_area:
             max_area = contour_area
             max_contour_index = i
-    largest_component = np.zeros(binary_image.shape, dtype=np.uint8)
+    largest_component = np.zeros(image.shape, dtype=np.uint8)
     cv2.drawContours(
         largest_component, contours, max_contour_index, color=255, thickness=-1
     )
     return largest_component
-
-
-""" 
-def equalization(image, hsv=False):
-    if hsv == True:
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    channels = cv2.split(image)
-    for i, plane in enumerate(channels):
-        channels[i] = cv2.equalizeHist(plane)
-    image = cv2.merge(channels)
-    if hsv == True:
-        image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
-    return image
-"""
-"""
-def confidence_interval_extraction(
-    image, hand, eps
-):  # equalization, no_clahe_mask, hsv equalization, 1.5, mean ,no_hsv_mean_thresh ,CI
-    image = equalization(image, hsv=True)
-    lower = [0, 0, 0]
-    upper = [0, 0, 0]
-    channels = cv2.split(image)
-    for i in range(3):
-        channel = channels[i]
-        average = np.mean(
-            channel.reshape(1, -1)[hand.reshape(1, -1) > 0]
-        )  # restricting to the hand mask
-        stderr = np.std(channel.reshape(1, -1)[hand.reshape(1, -1) > 0])
-        lower[i] = average - eps * stderr
-        upper[i] = average + eps * stderr
-    mask = cv2.bitwise_not(cv2.inRange(image, np.array(lower), np.array(upper)))
-    hand = cv2.morphologyEx(
-        hand,
-        cv2.MORPH_ERODE,
-        kernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)),
-    )
-    nails_mask = cv2.medianBlur(cv2.bitwise_and(mask, hand), 7)
-    return nails_mask, cv2.bitwise_and(image, image, mask=nails_mask)
-"""
 
 
 def saturation_extraction(
@@ -101,11 +60,7 @@ def saturation_extraction(
     mask = cv2.threshold(
         saturation, average - eps * stderr, 255, type=cv2.THRESH_BINARY_INV
     )[1]
-    hand = cv2.morphologyEx(
-        hand,
-        cv2.MORPH_ERODE,
-        kernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)),
-    )
+
     nails_mask = cv2.medianBlur(cv2.bitwise_and(mask, hand), 7)
 
     return nails_mask, cv2.bitwise_and(image, image, mask=nails_mask)
@@ -113,14 +68,12 @@ def saturation_extraction(
 
 def iou(test: np.array, image: np.array) -> float:
     """
-    Compute Intersection over Union coeffiicient.
-    :param filename: filename of mask provided in test folder
+    Compute Intersection over Union coefficient.
+    :param test: exemplary image
     :param image: binary mask of nails
     :return: IoU coefficient
     """
-    if filename == "000.jpg":
-        return 0
-    if test.ndim == 3:
+    if test.ndim == 3:  # converting BGR picture to one channel
         test = cv2.split(test)[0]
     if image.ndim == 3:
         image = cv2.split(image)[0]
@@ -131,14 +84,12 @@ def iou(test: np.array, image: np.array) -> float:
 
 def dice(test: np.array, image: np.array) -> float:
     """
-    Compute Dice coeffiicient.
-    :param filename: filename of mask provided in test folder
+    Compute Dice coefficient.
+    :param test: exemplary image
     :param image: binary mask of nails
     :return: Dice coefficient
     """
-    if filename == "000.jpg":
-        return 0
-    if test.ndim == 3:
+    if test.ndim == 3:  # converting BGR picture to one channel
         test = cv2.split(test)[0]
     if image.ndim == 3:
         image = cv2.split(image)[0]
@@ -147,34 +98,35 @@ def dice(test: np.array, image: np.array) -> float:
 
 
 if __name__ == "__main__":
-    DISPLAY = 1
-    images = {}
+    DISPLAY = 0  # if True then pictures of consecutive steps are displayed.
+    images = {}  # filename: image (as np.array)
     tests = {}
     for file in glob.glob(os.path.join("nails_segmentation", "images", "*.jpg")):
         images[os.path.basename(file)] = cv2.imread(file)
 
     for file in glob.glob(os.path.join("nails_segmentation", "labels", "*.jpg")):
         tests[os.path.basename(file)] = cv2.imread(file)
-    row = 0
-    no_of_rows = 4
-    iou_array = []
+    row = 0  # iterator
+    no_of_rows = 4  # number of rows (pictures) to be displayed
+    iou_array = []  # array of IoU coefficients
     dice_array = []
 
     for filename, image in images.items():
         hand_mask, hand = hand_recognition(image)
-        nails_mask, nails = saturation_extraction(hand, hand_mask, 1.04)
+        nails_mask, nails = saturation_extraction(hand, hand_mask, 1)
         saturation = cv2.split(cv2.cvtColor(image, cv2.COLOR_BGR2HSV))[1]
         test = tests[filename]
         iou_array.append(iou(test, nails_mask))
         dice_array.append(dice(test, nails_mask))
+        cv2.imwrite(os.path.join("nails_segmentation", "result", filename), hand)
         if DISPLAY:
-            images_to_plot = [
+            images_to_plot = [  # array of tuples - (image, title of image)
                 (image, "Original image"),
                 (hand, "Extracted hand"),
-                (saturation, "Satueation channel"),
+                (saturation, "Saturation channel"),
                 (
                     nails,
-                    f"Extracted nails, iou: {round(iou(test, nails_mask),2)}, dice: {round(dice(test, nails_mask),2)}",
+                    f"Extracted nails, iou: {round(iou(test, nails_mask), 2)}, dice: {round(dice(test, nails_mask), 2)}",
                 ),
                 (
                     test,
