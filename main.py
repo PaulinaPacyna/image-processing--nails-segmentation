@@ -96,9 +96,6 @@ def clahe(image, mask=None, hsv=False):
     return image
 
 
-def purple(image):
-    pass
-
 
 def largest_component_mask(bin_img):
     contours = cv2.findContours(bin_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
